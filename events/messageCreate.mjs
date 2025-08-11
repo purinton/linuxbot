@@ -1,4 +1,5 @@
 // events/messageCreate.mjs
+import { splitMsg } from '@purinton/discord';
 export default async function ({ client, log, msg, openai, promptConfig, allowIds }, message) {
     log.debug('messageCreate', { id: message.id });
     if (message.author.id === client.user.id) return;
@@ -54,8 +55,86 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             log.debug('invocationMissingIgnored', { userId, messageId: message.id });
             return; // Not addressed to bot context
         }
+        // Fetch last 100 messages in the channel (includes current message)
+        let fetched;
+        try {
+            fetched = await message.channel.messages.fetch({ limit: 100 });
+        } catch (err) {
+            log.warn('historyFetchFailed', { error: err.message, channelId: message.channel.id });
+            await message.channel.send('History fetch failed.');
+            return;
+        }
 
-        await message.reply({ content: 'OK' });
+        // Sort chronologically oldest -> newest
+        const history = Array.from(fetched.values())
+            .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+        // Build conversation messages
+        const conversationMessages = history.map(m => {
+            const role = m.author?.id === client.user.id ? 'assistant' : 'user';
+            let text = (m.cleanContent || m.content || '').trim();
+            if (!text) return null; // skip empty
+            // Optionally include author tag for user messages to help threading
+            if (role === 'user') {
+                text = `${m.author.username}: ${text}`;
+            }
+            return {
+                role,
+                content: [
+                    { type: 'input_text', text }
+                ]
+            };
+        }).filter(Boolean);
+
+        // Clone promptConfig (it's frozen) and append history
+        const baseMessages = promptConfig.input.map(m => ({
+            role: m.role,
+            content: m.content.map(c => ({ ...c }))
+        }));
+
+        const input = [...baseMessages, ...conversationMessages];
+
+        // Call OpenAI Responses API (assuming @purinton/openai exposes responses.create)
+        let response;
+        try {
+            response = await openai.responses.create({
+                model: promptConfig.model,
+                input
+            });
+        } catch (err) {
+            log.warn('openaiRequestFailed', { error: err.message });
+            await message.channel.send('AI request failed.');
+            return;
+        }
+
+        // Extract assistant reply text
+        let aiText = '';
+        try {
+            if (response.output_text) {
+                aiText = response.output_text;
+            } else if (Array.isArray(response.output)) {
+                aiText = response.output
+                    .map(block => Array.isArray(block.content) ? block.content.map(c => c.text || '').join('') : '')
+                    .join('\n');
+            } else if (Array.isArray(response.content)) {
+                aiText = response.content.map(c => c.text || '').join('\n');
+            } else if (response.text) {
+                aiText = response.text;
+            }
+        } catch (err) {
+            log.debug('responseParseError', { error: err.message });
+        }
+
+        aiText = (aiText || '(no response)').trim();
+        if (!aiText) aiText = '(empty response)';
+
+        // Split and send using shared splitter
+        const chunks = splitMsg(aiText, 2000);
+        for (const part of chunks) {
+            // eslint-disable-next-line no-await-in-loop
+            await message.channel.send(part);
+        }
+        log.debug('openaiResponseSent', { parts: chunks.length, totalLength: aiText.length });
     } catch (err) {
         log.warn('messageCreateHandlerError', { error: err.message, messageId: message.id });
     }

@@ -112,20 +112,10 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             return;
         }
 
-        // Extract assistant reply text (try output_text, output, content, text)
+        // Extract assistant reply text (OpenAI v2 format)
         let aiText = '';
         try {
-            if (response.output_text) {
-                aiText = response.output_text;
-            } else if (Array.isArray(response.output)) {
-                aiText = response.output
-                    .map(block => Array.isArray(block.content) ? block.content.map(c => c.text || '').join('') : '')
-                    .join('\n');
-            } else if (Array.isArray(response.content)) {
-                aiText = response.content.map(c => c.text || '').join('\n');
-            } else if (response.text) {
-                aiText = response.text;
-            }
+            aiText = response.choices?.[0]?.message?.content || '';
         } catch (err) {
             log.debug('responseParseError', { error: err.message });
         }

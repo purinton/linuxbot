@@ -69,37 +69,37 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         const history = Array.from(fetched.values())
             .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-        // Build conversation messages
-        const conversationMessages = history.map(m => {
-            const role = m.author?.id === client.user.id ? 'assistant' : 'user';
-            let text = (m.cleanContent || m.content || '').trim();
-            if (!text) return null; // skip empty
-            // Optionally include author tag for user messages to help threading
-            if (role === 'user') {
-                text = `${m.author.username}: ${text}`;
-            }
-            return {
-                role,
-                content: [
-                    { type: 'input_text', text }
-                ]
-            };
-        }).filter(Boolean);
+        // Clone promptConfig and inject history as input
+        const clonedPrompt = {
+            ...promptConfig,
+            input: [
+                ...promptConfig.input.map(m => ({
+                    role: m.role,
+                    content: m.content.map(c => ({ ...c }))
+                })),
+                ...history.map(m => {
+                    const role = m.author?.id === client.user.id ? 'assistant' : 'user';
+                    let text = (m.cleanContent || m.content || '').trim();
+                    if (!text) return null;
+                    if (role === 'user') {
+                        text = `${m.author.username}: ${text}`;
+                    }
+                    return {
+                        role,
+                        content: [
+                            { type: 'input_text', text }
+                        ]
+                    };
+                }).filter(Boolean)
+            ]
+        };
 
-        // Clone promptConfig (it's frozen) and append history
-        const baseMessages = promptConfig.input.map(m => ({
-            role: m.role,
-            content: m.content.map(c => ({ ...c }))
-        }));
-
-        const input = [...baseMessages, ...conversationMessages];
-
-        // Call OpenAI Responses API (assuming @purinton/openai exposes responses.create)
+        // Call OpenAI API with { model, input }
         let response;
         try {
-            response = await openai.responses.create({
-                model: promptConfig.model,
-                input
+            response = await openai.chat.completions.create({
+                model: clonedPrompt.model,
+                input: clonedPrompt.input
             });
         } catch (err) {
             log.warn('openaiRequestFailed', { error: err.message });
@@ -107,7 +107,7 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             return;
         }
 
-        // Extract assistant reply text
+        // Extract assistant reply text (try output_text, output, content, text)
         let aiText = '';
         try {
             if (response.output_text) {
@@ -124,7 +124,6 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         } catch (err) {
             log.debug('responseParseError', { error: err.message });
         }
-
         aiText = (aiText || '(no response)').trim();
         if (!aiText) aiText = '(empty response)';
 

@@ -1,3 +1,1 @@
-{
-    "help": "これはヘルプテキストです。"
-}
+{"error":"No JSON found","message":"You used the placeholder {json} instead of pasting the en-US.json content. Please paste the actual JSON to translate. I will: \n- Translate string values into Japanese (ja) \n- Keep any {placeholders} intact\n- Keep the keys unchanged unless you request otherwise\n- Return valid JSON with unescaped Unicode\nIf you want keys translated or other special handling (HTML/Markdown, ICU messages), say so."}

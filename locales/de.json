@@ -1,3 +1,1 @@
-{
-    "help": "Dies ist der Hilfetext."
-}
+{"error":"No JSON received. Please paste the en-US.json content you want translated (the full JSON). I will translate the values to German (de), keep any {placeholders} exactly as they are, preserve keys, and return the translated JSON with unescaped Unicode."}

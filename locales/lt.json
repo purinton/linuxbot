@@ -1,3 +1,1 @@
-{
-    "help": "Tai yra pagalbos tekstas."
-}
+{"error":"I don't see the JSON content — you wrote `{json}` instead of pasting the actual en-US.json. Please paste the full JSON file here and I'll translate it to Lithuanian (locale `lt`), keeping any {placeholders} exactly as-is and returning valid JSON with unescaped Unicode."}

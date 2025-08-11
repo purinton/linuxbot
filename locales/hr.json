@@ -1,3 +1,1 @@
-{
-    "help": "Ovo je tekst pomoći."
-}
+{"error":"No JSON content detected. Please paste the contents of en-US.json (the actual JSON) so I can translate it to hr. I will preserve all {placeholders}, keep keys unchanged, and return the translated JSON with unescaped Unicode."}

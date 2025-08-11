@@ -1,3 +1,1 @@
-{
-    "help": "Ini adalah teks bantuan."
-}
+{"error":"No JSON content was provided. Please paste the contents of en-US.json and I will translate the values to Indonesian (locale \"id\"), keeping any {placeholders} intact and returning a JSON with unescaped Unicode."}

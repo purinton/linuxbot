@@ -1,3 +1,1 @@
-{
-    "help": "이것은 도움말 텍스트입니다."
-}
+{"error":"I don't see the en-US.json content. Please paste the JSON you want translated (the full file). I'll translate all string values to Korean, keep any {placeholders} exactly as-is, preserve keys/structure, and return the JSON with unescaped Unicode."}

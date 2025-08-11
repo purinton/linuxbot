@@ -1,3 +1,1 @@
-{
-    "help": "Това е помощният текст."
-}
+{"error":"I don't see the en-US.json content. Please paste the JSON you want translated (the full file text). I will translate all strings to Bulgarian (bg), keep any {placeholders} exactly as-is, and return the translated JSON with unescaped Unicode."}

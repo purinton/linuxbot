@@ -1,3 +1,1 @@
-{
-    "help": "To jest tekst pomocy."
-}
+{"error":"No JSON content detected. Please paste the contents of en-US.json here (the full JSON). I will translate it to Polish (locale 'pl'), keep any {placeholders} exactly as-is, and return the translated JSON with unescaped Unicode. If you also want the locale field changed (e.g. from \"en-US\" to \"pl\"), let me know."}

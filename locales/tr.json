@@ -1,3 +1,1 @@
-{
-    "help": "Bu yardım metnidir."
-}
+{"error":"I don't see the JSON content. Please paste the en-US.json contents you want translated (the full JSON). I will translate the strings to Turkish, keep any {placeholders} exactly as-is, and return the translated JSON with unescaped Unicode."}

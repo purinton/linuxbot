@@ -1,3 +1,1 @@
-{
-    "help": "Questo è il testo di aiuto."
-}
+{"error":"I don't see the JSON content. Please paste the actual en-US.json file content (the JSON) you want translated. \n\nNotes: I will\n- translate all string values into Italian,\n- keep any placeholders like {name} or {count} exactly as-is,\n- preserve the original JSON structure and keys,\n- return the JSON with unescaped Unicode (actual Italian characters).\n\nIf you also want the locale field changed (e.g. \"locale\": \"it\"), tell me and I'll update it."}

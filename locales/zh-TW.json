@@ -1,3 +1,1 @@
-{
-    "help": "這是幫助文本。"
-}
+{"error":"No JSON provided. Please paste the contents of en-US.json that you want translated (include the full JSON). I will translate the strings to zh-TW, keep any {placeholders} unchanged, and return valid JSON with unescaped Unicode."}

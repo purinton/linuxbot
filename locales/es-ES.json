@@ -1,3 +1,1 @@
-{
-    "help": "Este es el texto de ayuda."
-}
+{"error":"No JSON content detected. Please paste the en-US.json content you want translated (the message currently shows '{json}' instead of the actual JSON). I will translate the strings to es-ES, keep any {placeholders} exactly as-is, and return the translated JSON with unescaped Unicode."}

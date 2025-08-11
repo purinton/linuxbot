@@ -1,3 +1,1 @@
-{
-    "help": "Ceci est le texte d'aide."
-}
+{"error":"No JSON content received. Please paste the contents of en-US.json (exact JSON) so I can translate it to fr. I will preserve any {placeholders} exactly and return valid JSON with unescaped Unicode."}

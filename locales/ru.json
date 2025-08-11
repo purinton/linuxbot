@@ -1,3 +1,1 @@
-{
-    "help": "Это текст справки."
-}
+{"error":"No JSON provided. Please paste the contents of en-US.json (the full JSON object) so I can translate it to Russian. \n\nNotes:\n- I will keep all {placeholders} exactly as-is.\n- I will preserve the JSON keys and structure and only translate the string values.\n- Output will be valid JSON with unescaped Unicode.\n\nOptional: tell me if you prefer formal («Вы») or informal («ты») phrasing for Russian."}

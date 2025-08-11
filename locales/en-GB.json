@@ -1,3 +1,1 @@
-{
-    "help": "Dies ist der Hilfetext."
-}
+{"error":"No JSON provided. Please paste the contents of en-US.json (the full JSON) so I can translate it to en-GB. Keep any {placeholders} intact — I will not change them."}

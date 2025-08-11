@@ -1,3 +1,7 @@
-{
-    "help": "Tämä on ohjeteksti."
-}
+
+
+{"error":"No JSON content detected","message":"Please paste the contents of en-US.json (the JSON to be translated). I will translate it to Finnish (fi), keep any {placeholders} unchanged, and return the translated JSON with unescaped Unicode."}
+
+
+
+

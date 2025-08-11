@@ -1,3 +1,1 @@
-{
-    "help": "Đây là văn bản trợ giúp."
-}
+{"error":"No JSON content detected. You sent the literal text \"{json}\". Please paste the full en-US.json content (the JSON object) you want translated. I will translate the strings to Vietnamese, keep any {placeholders} unchanged, and return the translated JSON with unescaped Unicode."}

@@ -1,3 +1,1 @@
-{
-    "help": "Це текст довідки."
-}
+{"error":"No JSON detected. Please paste the contents of en-US.json that you want translated to Ukrainian (locale: \"uk\").\n\nNotes:\n- I will keep any {placeholders} exactly as-is.\n- I will only translate the string values (keys will remain unchanged).\n- I will return valid JSON with unescaped Unicode (actual Cyrillic characters).\n\nPaste the JSON and I'll translate it."}

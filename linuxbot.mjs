@@ -28,28 +28,28 @@ function validatePromptConfig(cfg) {
     if (!cfg.model || typeof cfg.model !== 'string') {
         throw new Error('openai.json: "model" must be a non-empty string');
     }
-    if (!Array.isArray(cfg.input) || cfg.input.length === 0) {
-        throw new Error('openai.json: "input" must be a non-empty array');
+    if (!Array.isArray(cfg.messages) || cfg.messages.length === 0) {
+        throw new Error('openai.json: "messages" must be a non-empty array');
     }
-    cfg.input.forEach((msg, i) => {
+    cfg.messages.forEach((msg, i) => {
         if (typeof msg !== 'object' || msg === null) {
-            throw new Error(`openai.json: input[${i}] must be an object`);
+            throw new Error(`openai.json: messages[${i}] must be an object`);
         }
         if (!msg.role || typeof msg.role !== 'string') {
-            throw new Error(`openai.json: input[${i}].role must be a non-empty string`);
+            throw new Error(`openai.json: messages[${i}].role must be a non-empty string`);
         }
         if (!Array.isArray(msg.content) || msg.content.length === 0) {
-            throw new Error(`openai.json: input[${i}].content must be a non-empty array`);
+            throw new Error(`openai.json: messages[${i}].content must be a non-empty array`);
         }
         msg.content.forEach((c, j) => {
             if (typeof c !== 'object' || c === null) {
-                throw new Error(`openai.json: input[${i}].content[${j}] must be an object`);
+                throw new Error(`openai.json: messages[${i}].content[${j}] must be an object`);
             }
             if (!c.type || typeof c.type !== 'string') {
-                throw new Error(`openai.json: input[${i}].content[${j}].type must be a non-empty string`);
+                throw new Error(`openai.json: messages[${i}].content[${j}].type must be a non-empty string`);
             }
             if (c.type === 'input_text' && (typeof c.text !== 'string' || c.text.trim().length === 0)) {
-                throw new Error(`openai.json: input[${i}].content[${j}].text must be a non-empty string for type input_text`);
+                throw new Error(`openai.json: messages[${i}].content[${j}].text must be a non-empty string for type input_text`);
             }
         });
     });
@@ -84,7 +84,7 @@ const client = await createDiscord({
         version,
         openai,
         allowIds,
-        promptConfig
+    promptConfig
     },
     intents: {
         Guilds: true,

@@ -74,7 +74,7 @@ allowIds.forEach(id => {
     }
 });
 
-const openai = createOpenAI({ apiKey: OPENAI_API_KEY });
+const openai = createOpenAI();
 
 const client = await createDiscord({
     log,

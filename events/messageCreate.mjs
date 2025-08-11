@@ -69,11 +69,11 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         const history = Array.from(fetched.values())
             .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-        // Clone promptConfig and inject history as input
+        // Clone promptConfig and inject history as messages
         const clonedPrompt = {
             ...promptConfig,
-            input: [
-                ...promptConfig.input.map(m => ({
+            messages: [
+                ...promptConfig.messages.map(m => ({
                     role: m.role,
                     content: m.content.map(c => ({ ...c }))
                 })),
@@ -87,19 +87,19 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
                     return {
                         role,
                         content: [
-                            { type: 'input_text', text }
+                            { type: role === 'assistant' ? 'output_text' : 'input_text', text }
                         ]
                     };
                 }).filter(Boolean)
             ]
         };
 
-        // Call OpenAI API with { model, input }
+        // Call OpenAI API with { model, messages }
         let response;
         try {
             response = await openai.chat.completions.create({
                 model: clonedPrompt.model,
-                input: clonedPrompt.input
+                messages: clonedPrompt.messages
             });
         } catch (err) {
             log.warn('openaiRequestFailed', { error: err.message });

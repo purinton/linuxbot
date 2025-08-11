@@ -1,6 +1,6 @@
 {
     "model": "gpt-5-mini",
-    "input": [
+    "messages": [
         {
             "role": "developer",
             "content": [

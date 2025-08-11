@@ -97,6 +97,17 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         // Debug log the full prompt
         log.debug('openaiPrompt', { prompt: clonedPrompt });
 
+        // Start typing notification and repeat every 5 seconds
+        let typingInterval;
+        try {
+            await message.channel.sendTyping();
+            typingInterval = setInterval(() => {
+                message.channel.sendTyping().catch(() => {});
+            }, 5000);
+        } catch (err) {
+            log.debug('typingNotificationFailed', { error: err.message });
+        }
+
         // Call OpenAI API with { model, messages }
         let response;
         try {
@@ -107,10 +118,12 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             // Debug log the full response
             log.debug('openaiResponse', { response });
         } catch (err) {
+            if (typingInterval) clearInterval(typingInterval);
             log.warn('openaiRequestFailed', { error: err.message });
             await message.channel.send('AI request failed.');
             return;
         }
+        if (typingInterval) clearInterval(typingInterval);
 
         // Extract assistant reply text (OpenAI v2 format)
         let aiText = '';

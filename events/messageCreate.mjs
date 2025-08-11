@@ -57,23 +57,9 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         // Permission pre-check (best-effort; depends on lib exposing permissionsFor)
         try {
             const perms = message.channel?.permissionsFor?.(client.user);
-            if (perms) {
-                const send = perms.has?.('SendMessages');
-                if (!send) {
-                    const details = {
-                        channelId: message.channel?.id,
-                        bitfield: perms.bitfield?.toString?.() || perms.bitfield,
-                        viewChannel: perms.has?.('ViewChannel'),
-                        sendMessages: send,
-                        sendMessagesInThreads: perms.has?.('SendMessagesInThreads'),
-                        readMessageHistory: perms.has?.('ReadMessageHistory'),
-                        manageMessages: perms.has?.('ManageMessages'),
-                        addReactions: perms.has?.('AddReactions'),
-                        mentionEveryone: perms.has?.('MentionEveryone')
-                    };
-                    log.warn('missingSendPermissionPreCheck', details);
-                    return;
-                }
+            if (perms && !perms.has?.('SendMessages')) {
+                log.warn('missingSendPermissionPreCheck', { channelId: message.channel?.id });
+                return;
             }
         } catch (err) {
             log.debug('permissionPreCheckFailed', { error: err.message });

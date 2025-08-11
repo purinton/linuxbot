@@ -87,7 +87,7 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
                     return {
                         role,
                         content: [
-                            { type: role === 'assistant' ? 'output_text' : 'input_text', text }
+                            { type: 'text', text }
                         ]
                     };
                 }).filter(Boolean)

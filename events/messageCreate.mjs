@@ -54,33 +54,8 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             log.debug('invocationMissingIgnored', { userId, messageId: message.id });
             return; // Not addressed to bot context
         }
-        // Permission pre-check (best-effort; depends on lib exposing permissionsFor)
-        try {
-            const perms = message.channel?.permissionsFor?.(client.user);
-            if (perms && !perms.has?.('SendMessages')) {
-                log.warn('missingSendPermissionPreCheck', { channelId: message.channel?.id });
-                return;
-            }
-        } catch (err) {
-            log.debug('permissionPreCheckFailed', { error: err.message });
-        }
 
-        try {
-            await message.reply({ content: 'OK' });
-        } catch (err) {
-            const code = err?.code || err?.status || err?.httpStatus;
-            if (code === 50013 || /Missing Permissions/i.test(err?.message || '')) {
-                log.warn('replyMissingPermissions', { channelId: message.channel?.id, messageId: message.id, code, error: err.message });
-                // Attempt fallback to channel.send if reply specifically blocked (e.g., thread archived, reply permission nuance)
-                try {
-                    await message.channel?.send?.('OK');
-                } catch (fallbackErr) {
-                    log.warn('fallbackSendFailed', { channelId: message.channel?.id, messageId: message.id, error: fallbackErr.message });
-                }
-            } else {
-                throw err; // rethrow for outer catch
-            }
-        }
+        await message.reply({ content: 'OK' });
     } catch (err) {
         log.warn('messageCreateHandlerError', { error: err.message, messageId: message.id });
     }

@@ -94,6 +94,9 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             ]
         };
 
+        // Debug log the full prompt
+        log.debug('openaiPrompt', { prompt: clonedPrompt });
+
         // Call OpenAI API with { model, messages }
         let response;
         try {
@@ -101,6 +104,8 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
                 model: clonedPrompt.model,
                 messages: clonedPrompt.messages
             });
+            // Debug log the full response
+            log.debug('openaiResponse', { response });
         } catch (err) {
             log.warn('openaiRequestFailed', { error: err.message });
             await message.channel.send('AI request failed.');

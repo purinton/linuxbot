@@ -74,7 +74,7 @@ allowIds.forEach(id => {
     }
 });
 
-const openai = createOpenAI();
+const openai = await createOpenAI();
 
 const client = await createDiscord({
     log,

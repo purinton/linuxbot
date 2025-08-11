@@ -1,1 +1,1 @@
-{"error":"No JSON provided. Please paste the contents of en-US.json (the JSON to translate). I will translate it to pt-BR, keep any {placeholders} exactly as they appear, and return the translated JSON with unescaped Unicode."}
+{"error":"No target locale provided. Please specify the target locale (e.g., \"es-ES\", \"fr-FR\"). Placeholders like {placeholders} will be kept intact."}

@@ -1,2 +1,1 @@
-{"error":"I don't see the JSON content. Please paste the full contents of en-US.json you want translated to Norwegian (locale: no)."}
-
+{"error":"Missing target locale","message":"Please specify the target locale (for example: fr-FR, es-ES, de-DE). I will then return the translated JSON and will keep all {placeholders} (like {target_locale} and {#}) intact."}

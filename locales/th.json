@@ -1,9 +1,1 @@
-{"error":"No JSON content received. The message contains the placeholder {json} instead of the actual en-US.json. Please paste the full JSON you want translated (the contents of en-US.json)."}
-
-																			
-
-															
-															
-															
-															
-															
+	{"error":"Please specify the target locale (for example: \"es-ES\", \"fr-FR\", \"de-DE\"). I will then translate the JSON value into that locale and keep all {placeholders} intact."}

@@ -1,1 +1,1 @@
-{"error":"No JSON provided. Please paste the contents of en-US.json and I will translate its string values to Hungarian (hu), preserving any {placeholders} and returning the JSON with unescaped Unicode."}
+{"error": "Missing target locale", "message": "Please specify the target locale (for example: fr-FR, es-ES, de-DE). I will then return the translated JSON with placeholders intact."}

@@ -1,1 +1,2 @@
-{"error":"No JSON content detected. Please paste the contents of en-US.json (the actual JSON) so I can translate it to hr. I will preserve all {placeholders}, keep keys unchanged, and return the translated JSON with unescaped Unicode."}
+
+{"error":"No target locale provided. Please tell me which locale to translate to (for example: es-ES, fr-FR, de-DE). I will keep any {placeholders} (like {target_locale} and {#}) intact and return the translated JSON with unescaped Unicode."}

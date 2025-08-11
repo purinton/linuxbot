@@ -1,1 +1,1 @@
-{"error":"No JSON provided. Please paste the contents of en-US.json that you want translated (include the full JSON). I will translate the strings to zh-TW, keep any {placeholders} unchanged, and return valid JSON with unescaped Unicode."}
+{ "error": "Please specify the target locale (for example: fr-FR, es-ES, de-DE, pt-BR). I will translate the JSON into that locale and keep any {placeholders} intact, returning the translated JSON with unescaped unicode." }

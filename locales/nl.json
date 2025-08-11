@@ -1,3 +1,1 @@
-
-
-{"error":"You didn't include the JSON content. Please paste the en-US.json content you want translated (keep it inside code block or plain text). I will translate all strings to Dutch (nl), keep any {placeholders} exactly as-is, and return the translated JSON with unescaped Unicode."}
+{"error":"No target locale provided. Please specify the target locale (for example: fr-FR, es-ES, de-DE, ja-JP). I will translate the JSON into that locale, keep any {placeholders} intact, and return the translated JSON with unescaped Unicode."}

@@ -1,1 +1,1 @@
-{"error":"I don't see the en-US.json content. Please paste the JSON you want translated (the full file). I'll translate all string values to Korean, keep any {placeholders} exactly as-is, preserve keys/structure, and return the JSON with unescaped Unicode."}
+{"error":"Missing target locale","message":"Please specify the target locale (for example: fr-FR, es-ES, de-DE). I will translate the JSON content to that locale and keep any {placeholders} intact."}

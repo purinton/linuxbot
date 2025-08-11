@@ -1,1 +1,1 @@
-{"error":"I don't see the en-US.json content. Please paste the JSON you want translated (the full file text). I will translate all strings to Bulgarian (bg), keep any {placeholders} exactly as-is, and return the translated JSON with unescaped Unicode."}
+{"error":"Missing target locale","message":"Please specify the target locale (for example: fr-FR, es-ES, de-DE, ja-JP). Also let me know if you prefer a formal or informal tone for languages that distinguish formality. I will keep any {placeholders} intact and return the translated JSON with unescaped Unicode."}

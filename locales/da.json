@@ -1,6 +1,1 @@
-{"error":"I don’t see the JSON content to translate. Please paste the full en-US.json file (or attach it) so I can translate the string values to Danish (da)."}
-
-
-
-
-
+{"error":"Missing target locale","message":"Please specify the target locale (e.g., fr-FR, es-ES, de-DE). Once you provide it I will translate the JSON and keep any {placeholders} intact."}

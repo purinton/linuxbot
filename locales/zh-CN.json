@@ -1,2 +1,1 @@
-{"error":"I don’t see the actual JSON content — you sent the literal text `{json}`. Please paste the full en-US.json content you want translated (or attach the file)."}
-
+{"error":"No target locale provided. Please specify the target locale (e.g., fr-FR, es-ES, de-DE, ja-JP). Once you provide it, I will return the translated JSON with placeholders left intact and with unescaped Unicode."}

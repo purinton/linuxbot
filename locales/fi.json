@@ -1,7 +1,1 @@
-
-
-{"error":"No JSON content detected","message":"Please paste the contents of en-US.json (the JSON to be translated). I will translate it to Finnish (fi), keep any {placeholders} unchanged, and return the translated JSON with unescaped Unicode."}
-
-
-
-
+{"error":"Missing target locale","message":"Please specify the target locale (e.g., fr-FR, es-ES, de-DE). I will translate the provided JSON and keep any {placeholders} intact. Would you like a formal or informal tone?"}

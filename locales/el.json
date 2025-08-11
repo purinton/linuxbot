@@ -1,1 +1,1 @@
-{"error":"No JSON provided. Please paste the contents of en-US.json to translate."}
+{"error":"Please specify the target locale (for example: \"fr-FR\", \"es-ES\", \"de-DE\"). I will then translate the provided JSON into that locale, keeping all {placeholders} intact and returning unescaped Unicode."}

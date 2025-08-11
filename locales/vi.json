@@ -1,1 +1,1 @@
-{"error":"No JSON content detected. You sent the literal text \"{json}\". Please paste the full en-US.json content (the JSON object) you want translated. I will translate the strings to Vietnamese, keep any {placeholders} unchanged, and return the translated JSON with unescaped Unicode."}
+	{"error":"Please specify the target locale (for example: fr-FR, es-ES, de-DE, pt-BR, ja-JP). I will then return the translated JSON and keep any {placeholders} intact."}

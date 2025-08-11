@@ -1,1 +1,1 @@
-{"error":"I don't see the JSON content — you wrote `{json}` instead of pasting the actual en-US.json. Please paste the full JSON file here and I'll translate it to Lithuanian (locale `lt`), keeping any {placeholders} exactly as-is and returning valid JSON with unescaped Unicode."}
+{"error":"Missing target locale. Please specify the target locale (e.g., \"es-ES\", \"fr-FR\", \"de-DE\") so I can translate the JSON. I will keep any {placeholders} intact and return the translated JSON with unescaped Unicode."}

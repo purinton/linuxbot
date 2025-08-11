@@ -1,1 +1,1 @@
-{"error":"No JSON provided. Please paste the contents of en-US.json (the full JSON) so I can translate it to sv-SE. Keep any {placeholders} as-is. If the file is large, you can paste a portion or upload the file."}
+{"error":"Missing target locale. Please specify the target locale (e.g., fr-FR, es-ES, de-DE, ja-JP). I will then return the translated JSON with placeholders (like {placeholders}) kept intact and with unescaped Unicode."}

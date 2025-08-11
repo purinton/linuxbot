@@ -10,7 +10,7 @@ export default async function ({ log, presence }, client) {
     function formatLoad() {
         return os.loadavg().slice(0, 3).map(n => n.toFixed(2)).join(', ');
     }
-    
+
     function updatePresence() {
         try {
             client.user.setPresence({
@@ -22,8 +22,6 @@ export default async function ({ log, presence }, client) {
         }
     }
 
-    // Initial update and 10s interval
-    updatePresence();
     const loadInterval = setInterval(updatePresence, 10_000);
 
     // Clean up on shutdown

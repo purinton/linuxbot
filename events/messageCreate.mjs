@@ -73,10 +73,12 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
         // Clone promptConfig and inject history as messages
+        const { model: baseModel, messages: baseMessages, ...otherConfig } = promptConfig;
         const clonedPrompt = {
-            ...promptConfig,
+            model: baseModel,
+            ...otherConfig,
             messages: [
-                ...promptConfig.messages.map(m => ({
+                ...baseMessages.map(m => ({
                     role: m.role,
                     content: m.content.map(c => ({ ...c }))
                 })),
@@ -251,13 +253,14 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         let aiText = '';
         const maxIterations = 3;
         let iteration = 0;
-        let messagesForApi = clonedPrompt.messages.map(m => ({ role: m.role, content: m.content }));
+    let messagesForApi = clonedPrompt.messages.map(m => ({ role: m.role, content: m.content }));
         while (iteration < maxIterations) {
             iteration += 1;
             let response;
             try {
                 response = await openai.chat.completions.create({
                     model: clonedPrompt.model,
+                    ...otherConfig,
                     messages: messagesForApi
                 });
                 log.debug('openaiResponse', { iteration, response });

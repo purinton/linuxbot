@@ -73,7 +73,7 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
         // Clone promptConfig and inject history as messages
-        const { model: baseModel, messages: baseMessages, ...otherConfig } = promptConfig;
+    const { model: baseModel, messages: baseMessages, ...otherConfig } = promptConfig;
         const clonedPrompt = {
             model: baseModel,
             ...otherConfig,
@@ -253,34 +253,42 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         let aiText = '';
         const maxIterations = 3;
         let iteration = 0;
-    let messagesForApi = clonedPrompt.messages.map(m => ({ role: m.role, content: m.content }));
+        let messagesForApi = clonedPrompt.messages.map(m => ({ role: m.role, content: m.content }));
+    const passthroughKeys = ['response_format','verbosity','reasoning_effort','tools','store'];
+        function extractToolCalls(resp) {
+            const tc = resp?.choices?.[0]?.message?.tool_calls;
+            if (Array.isArray(tc) && tc.length) return tc.map(t => ({ id: t.id, function: t.function }));
+            return [];
+        }
+        function extractContent(resp) {
+            const msg = resp?.choices?.[0]?.message;
+            if (msg?.content) {
+                if (typeof msg.content === 'string') return msg.content;
+                if (Array.isArray(msg.content)) return msg.content.map(c => c.text || c.content || '').join('\n');
+            }
+            return '';
+        }
         while (iteration < maxIterations) {
             iteration += 1;
             let response;
             try {
-                response = await openai.chat.completions.create({
-                    model: clonedPrompt.model,
-                    ...otherConfig,
-                    messages: messagesForApi
-                });
-                log.debug('openaiResponse', { iteration, response });
+                const payload = { model: clonedPrompt.model, messages: messagesForApi };
+                for (const k of passthroughKeys) {
+                    if (k in otherConfig) payload[k] = otherConfig[k];
+                }
+                log.debug('openaiRequestPayload', { iteration, payload });
+                response = await openai.chat.completions.create(payload);
+                log.debug('openaiResponse', { iteration, id: response.id });
             } catch (err) {
                 if (typingInterval) clearInterval(typingInterval);
                 log.warn('openaiRequestFailed', { error: err.message });
                 await message.channel.send('AI request failed.');
                 return;
             }
+            const toolCalls = extractToolCalls(response);
+            const content = extractContent(response);
 
-            const msgObj = response.choices?.[0]?.message || {};
-            const toolCalls = msgObj.tool_calls || msgObj.toolCalls || [];
-            const content = msgObj.content || '';
-
-            // Add assistant message (with potential tool calls) to conversation
-            messagesForApi.push({
-                role: 'assistant',
-                content: typeof content === 'string' && content ? [{ type: 'text', text: content }] : (Array.isArray(content) ? content : []),
-                tool_calls: toolCalls.length ? toolCalls : undefined
-            });
+            messagesForApi.push({ role: 'assistant', content: content ? [{ type: 'text', text: content }] : [], tool_calls: toolCalls.length ? toolCalls : undefined });
 
             if (toolCalls.length) {
                 // Execute tools in parallel
@@ -297,7 +305,7 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             }
 
             // No tool calls; finalize if we have content
-            aiText = (typeof content === 'string') ? content : Array.isArray(content) ? content.map(c => c.text || '').join('\n') : '';
+            aiText = content;
             break;
         }
 

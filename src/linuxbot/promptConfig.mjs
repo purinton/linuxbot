@@ -1,4 +1,5 @@
 import { fs, path } from '@purinton/common';
+import { getLocalMachineInfo } from './machineInfo.mjs';
 
 function validatePromptConfig(cfg) {
     if (typeof cfg !== 'object' || cfg === null) {
@@ -39,6 +40,18 @@ export function loadPromptConfig() {
     try {
         const raw = fs.readFileSync(path(import.meta, '../../openai.json'), 'utf8');
         const cfg = JSON.parse(raw);
+        const machineInfo = getLocalMachineInfo();
+        if (Array.isArray(cfg.messages)) {
+            cfg.messages.forEach(msg => {
+                if (Array.isArray(msg.content)) {
+                    msg.content.forEach(part => {
+                        if (part && typeof part.text === 'string' && part.text.includes('{localMachineInfo}')) {
+                            part.text = part.text.replaceAll('{localMachineInfo}', machineInfo);
+                        }
+                    });
+                }
+            });
+        }
         return validatePromptConfig(cfg);
     } catch (err) {
         throw new Error(`Failed to load/validate openai.json: ${err.message}`);

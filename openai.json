@@ -25,8 +25,8 @@
         {
             "type": "function",
             "function": {
-                "name": "read",
-                "description": "Read the contents of a folder or file",
+                "name": "read_file",
+                "description": "Read the contents of a file or list a directory. Supports glob patterns: *.ext matches in a single directory; **/*.ext matches recursively. Example paths: src/*.mjs, src/**/*.test.mjs. When listing, returns ls -l style lines with permissions, owner, group, size, and name. When reading a file, returns a header with permissions/owner/group then the file content (possibly truncated).",
                 "parameters": {
                     "type": "object",
                     "required": [

@@ -2,6 +2,7 @@
 import { splitMsg } from '@purinton/discord';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 export default async function ({ client, log, msg, openai, promptConfig, allowIds }, message) {
     log.debug('messageCreate', { id: message.id });
     if (message.author.id === client.user.id) return;
@@ -113,6 +114,90 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
         // Helper: execute tool calls in parallel and return results map
         async function executeToolCalls(toolCalls) {
             const root = process.cwd();
+            function modeToPerms(mode) {
+                const types = {
+                    'fifo': 'p', 'char': 'c', 'dir': 'd', 'block': 'b', 'file': '-', 'socket': 's', 'symbolicLink': 'l'
+                };
+                const typeChar = (s) => {
+                    if (s.isFIFO()) return types.fifo; if (s.isCharacterDevice()) return types.char; if (s.isDirectory()) return types.dir; if (s.isBlockDevice()) return types.block; if (s.isSocket()) return types.socket; if (s.isSymbolicLink()) return types.symbolicLink; return types.file;
+                };
+                const perms = ['USR', 'GRP', 'OTH'].map((ent, i) => {
+                    const shift = 6 - (i * 3);
+                    return [4,2,1].map(bit => (mode & (bit << shift)) ? bit : 0);
+                });
+                function tri(bits) { return [4,'r',2,'w',1,'x'].reduce((acc, cur, idx, arr)=> idx%2===0?acc:acc + ((bits.includes(arr[idx-1]))?cur:'-'),''); }
+                const str = perms.map(p => tri(p)).join('');
+                return { typeChar: (st)=>typeChar(st), permString: (st)=> typeChar(st)+str };
+            }
+
+            function formatEntry(fullPath, name, stat) {
+                const { permString } = modeToPerms(stat.mode);
+                const perms = modeToPerms(stat.mode).permString(stat);
+                const nlink = stat.nlink ?? 1;
+                let owner = stat.uid; let group = stat.gid;
+                // Try to map uid/gid via os.userInfo not readily accessible for arbitrary IDs; leave numeric.
+                const size = stat.size;
+                const mtime = new Date(stat.mtime).toISOString().slice(0,19).replace('T',' ');
+                return `${perms} ${nlink} ${owner} ${group} ${size} ${mtime} ${name}`;
+            }
+
+            function listDirectory(resolved, pattern) {
+                const entries = fs.readdirSync(resolved);
+                const lines = [];
+                for (const entry of entries) {
+                    const full = path.join(resolved, entry);
+                    let st; try { st = fs.lstatSync(full); } catch { continue; }
+                    lines.push(formatEntry(full, entry, st));
+                }
+                return lines.join('\n');
+            }
+
+            function applyGlob(globPath) {
+                // Simple glob support for *, **/*.ext patterns
+                const isRecursive = globPath.includes('**');
+                const parts = globPath.split(/[/\\]+/);
+                const segments = [];
+                for (let i=0;i<parts.length;i++) {
+                    if (parts[i] === '**') segments.push({ recursive: true }); else segments.push({ pattern: parts[i] });
+                }
+                const startIdx = globPath.startsWith('/') ? 1 : 0;
+                let roots = [globPath.startsWith('/') ? path.sep : root];
+                function matchSegment(currentPaths, segIdx) {
+                    if (segIdx >= segments.length) return currentPaths;
+                    const seg = segments[segIdx];
+                    if (seg.recursive) {
+                        // Expand recursively from current paths
+                        const accum = new Set();
+                        const rest = segments.slice(segIdx+1);
+                        for (const base of currentPaths) {
+                            function walk(p) {
+                                let ents; try { ents = fs.readdirSync(p); } catch { return; }
+                                for (const e of ents) {
+                                    const fp = path.join(p,e);
+                                    let st; try { st = fs.lstatSync(fp);} catch { continue; }
+                                    if (st.isDirectory()) walk(fp);
+                                    accum.add(fp);
+                                }
+                            }
+                            walk(base);
+                        }
+                        return matchSegment(Array.from(accum), segIdx+1);
+                    }
+                    const pattern = seg.pattern;
+                    const regex = new RegExp('^' + pattern.replace(/[-/\\^$+?.()|[\]{}]/g,'\\$&').replace(/\*/g, '.*') + '$');
+                    const next = [];
+                    for (const base of currentPaths) {
+                        let ents; try { ents = fs.readdirSync(base); } catch { continue; }
+                        for (const e of ents) {
+                            if (!regex.test(e)) continue;
+                            const fp = path.join(base,e);
+                            next.push(fp);
+                        }
+                    }
+                    return matchSegment(next, segIdx+1);
+                }
+                return matchSegment(roots, 0);
+            }
             const jobs = toolCalls.map(async tc => {
                 const fname = tc?.function?.name || 'unknown';
                 let argsRaw = tc?.function?.arguments || '{}';
@@ -122,19 +207,31 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
                 const statusMsg = await message.channel.send(`⏳ ${fname}(${JSON.stringify(firstArgVal)})`);
                 let result; let errored = false;
                 try {
-                    if (fname === 'read') {
+                    if (fname === 'read_file') {
                         const maxLen = typeof args.max_length === 'number' ? args.max_length : 10000;
                         if (!firstArgVal || typeof firstArgVal !== 'string') throw new Error('path required');
-                        const resolved = path.resolve(root, firstArgVal);
-                        if (!resolved.startsWith(root)) throw new Error('path outside root');
-                        const stat = fs.statSync(resolved);
-                        if (stat.isDirectory()) {
-                            const entries = fs.readdirSync(resolved).slice(0, 200);
-                            result = `Directory listing (first ${entries.length}):\n` + entries.join('\n');
+                        const hasGlob = /[*?]/.test(firstArgVal);
+                        if (hasGlob) {
+                            const matches = applyGlob(firstArgVal).slice(0, 500);
+                            if (!matches.length) throw new Error('no matches');
+                            const lines = matches.map(m => {
+                                let st; try { st = fs.lstatSync(m); } catch { return null; }
+                                return formatEntry(m, m, st);
+                            }).filter(Boolean);
+                            result = lines.join('\n');
                         } else {
-                            let data = fs.readFileSync(resolved, 'utf8');
-                            if (data.length > maxLen) data = data.slice(0, maxLen) + `\n...[truncated ${data.length - maxLen} bytes]`;
-                            result = data;
+                            const resolved = path.resolve(root, firstArgVal);
+                            if (!resolved.startsWith(root)) throw new Error('path outside root');
+                            const stat = fs.statSync(resolved);
+                            if (stat.isDirectory()) {
+                                result = listDirectory(resolved);
+                            } else {
+                                let data = fs.readFileSync(resolved, 'utf8');
+                                let truncated = false;
+                                if (data.length > maxLen) { truncated = true; data = data.slice(0, maxLen); }
+                                const header = formatEntry(resolved, path.basename(resolved), stat);
+                                result = header + '\n\n' + data + (truncated ? `\n...[truncated]` : '');
+                            }
                         }
                     } else {
                         result = 'Unsupported tool';

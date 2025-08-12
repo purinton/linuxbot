@@ -222,16 +222,22 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
                             }).filter(Boolean);
                             result = lines.join('\n');
                         } else {
-                            const resolved = path.resolve(root, firstArgVal);
-                            if (!resolved.startsWith(root)) throw new Error('path outside root');
-                            const stat = fs.statSync(resolved);
-                            if (stat.isDirectory()) {
-                                result = listDirectory(resolved);
+                            // Support absolute paths (e.g. /proc/mdstat) or paths relative to root (cwd)
+                            let targetPath;
+                            if (path.isAbsolute(firstArgVal)) {
+                                targetPath = firstArgVal;
                             } else {
-                                let data = fs.readFileSync(resolved, 'utf8');
+                                targetPath = path.resolve(root, firstArgVal);
+                                if (!targetPath.startsWith(root)) throw new Error('path outside root');
+                            }
+                            const stat = fs.statSync(targetPath);
+                            if (stat.isDirectory()) {
+                                result = listDirectory(targetPath);
+                            } else {
+                                let data = fs.readFileSync(targetPath, 'utf8');
                                 let truncated = false;
                                 if (data.length > maxLen) { truncated = true; data = data.slice(0, maxLen); }
-                                const header = formatEntry(resolved, path.basename(resolved), stat);
+                                const header = formatEntry(targetPath, path.basename(targetPath), stat);
                                 result = header + '\n\n' + data + (truncated ? `\n...[truncated]` : '');
                             }
                         }
@@ -257,7 +263,7 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
     const passthroughKeys = ['response_format','verbosity','reasoning_effort','tools','store'];
         function extractToolCalls(resp) {
             const tc = resp?.choices?.[0]?.message?.tool_calls;
-            if (Array.isArray(tc) && tc.length) return tc.map(t => ({ id: t.id, function: t.function }));
+            if (Array.isArray(tc) && tc.length) return tc.map(t => ({ id: t.id, type: t.type || 'function', function: t.function }));
             return [];
         }
         function extractContent(resp) {
@@ -291,9 +297,7 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             messagesForApi.push({ role: 'assistant', content: content ? [{ type: 'text', text: content }] : [], tool_calls: toolCalls.length ? toolCalls : undefined });
 
             if (toolCalls.length) {
-                // Execute tools in parallel
                 const toolResults = await executeToolCalls(toolCalls);
-                // Push each tool result
                 toolCalls.forEach(tc => {
                     messagesForApi.push({
                         role: 'tool',
@@ -301,10 +305,9 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
                         content: [{ type: 'text', text: toolResults[tc.id] || '' }]
                     });
                 });
-                continue; // Next iteration to get final answer
+                continue;
             }
 
-            // No tool calls; finalize if we have content
             aiText = content;
             break;
         }

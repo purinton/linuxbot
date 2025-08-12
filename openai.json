@@ -21,6 +21,33 @@
         "effort": "minimal",
         "summary": "auto"
     },
-    "tools": [],
+    "tools": [
+        {
+            "type": "function",
+            "function": {
+                "name": "read",
+                "description": "Read the contents of a folder or file",
+                "parameters": {
+                    "type": "object",
+                    "required": [
+                        "path",
+                        "max_length"
+                    ],
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "The path to the folder or file to read"
+                        },
+                        "max_length": {
+                            "type": "integer",
+                            "description": "Maximum number of bytes to read; defaults to 10000 if not specified"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "strict": true
+            }
+        }
+    ],
     "store": false
 }

@@ -1,5 +1,7 @@
 // events/messageCreate.mjs
 import { splitMsg } from '@purinton/discord';
+import fs from 'fs';
+import path from 'path';
 export default async function ({ client, log, msg, openai, promptConfig, allowIds }, message) {
     log.debug('messageCreate', { id: message.id });
     if (message.author.id === client.user.id) return;
@@ -108,40 +110,107 @@ export default async function ({ client, log, msg, openai, promptConfig, allowId
             log.debug('typingNotificationFailed', { error: err.message });
         }
 
-        // Call OpenAI API with { model, messages }
-        let response;
-        try {
-            response = await openai.chat.completions.create({
-                model: clonedPrompt.model,
-                messages: clonedPrompt.messages
+        // Helper: execute tool calls in parallel and return results map
+        async function executeToolCalls(toolCalls) {
+            const root = process.cwd();
+            const jobs = toolCalls.map(async tc => {
+                const fname = tc?.function?.name || 'unknown';
+                let argsRaw = tc?.function?.arguments || '{}';
+                let args;
+                try { args = JSON.parse(argsRaw); } catch { args = {}; }
+                const firstArgVal = args.path || Object.values(args)[0];
+                const statusMsg = await message.channel.send(`⏳ ${fname}(${JSON.stringify(firstArgVal)})`);
+                let result; let errored = false;
+                try {
+                    if (fname === 'read') {
+                        const maxLen = typeof args.max_length === 'number' ? args.max_length : 10000;
+                        if (!firstArgVal || typeof firstArgVal !== 'string') throw new Error('path required');
+                        const resolved = path.resolve(root, firstArgVal);
+                        if (!resolved.startsWith(root)) throw new Error('path outside root');
+                        const stat = fs.statSync(resolved);
+                        if (stat.isDirectory()) {
+                            const entries = fs.readdirSync(resolved).slice(0, 200);
+                            result = `Directory listing (first ${entries.length}):\n` + entries.join('\n');
+                        } else {
+                            let data = fs.readFileSync(resolved, 'utf8');
+                            if (data.length > maxLen) data = data.slice(0, maxLen) + `\n...[truncated ${data.length - maxLen} bytes]`;
+                            result = data;
+                        }
+                    } else {
+                        result = 'Unsupported tool';
+                    }
+                } catch (e) {
+                    errored = true;
+                    result = `ERROR: ${e.message}`;
+                }
+                try { await statusMsg.edit(statusMsg.content.replace('⏳', errored ? '❌' : '✅')); } catch {/* ignore */}
+                return { id: tc.id, result };
             });
-            // Debug log the full response
-            log.debug('openaiResponse', { response });
-        } catch (err) {
-            if (typingInterval) clearInterval(typingInterval);
-            log.warn('openaiRequestFailed', { error: err.message });
-            await message.channel.send('AI request failed.');
-            return;
+            const results = await Promise.all(jobs);
+            return results.reduce((acc, r) => { acc[r.id] = r.result; return acc; }, {});
         }
-        if (typingInterval) clearInterval(typingInterval);
 
-        // Extract assistant reply text (OpenAI v2 format)
+        // Call OpenAI (loop to handle tool calls) – limited iterations to prevent runaway
         let aiText = '';
-        try {
-            aiText = response.choices?.[0]?.message?.content || '';
-        } catch (err) {
-            log.debug('responseParseError', { error: err.message });
+        const maxIterations = 3;
+        let iteration = 0;
+        let messagesForApi = clonedPrompt.messages.map(m => ({ role: m.role, content: m.content }));
+        while (iteration < maxIterations) {
+            iteration += 1;
+            let response;
+            try {
+                response = await openai.chat.completions.create({
+                    model: clonedPrompt.model,
+                    messages: messagesForApi
+                });
+                log.debug('openaiResponse', { iteration, response });
+            } catch (err) {
+                if (typingInterval) clearInterval(typingInterval);
+                log.warn('openaiRequestFailed', { error: err.message });
+                await message.channel.send('AI request failed.');
+                return;
+            }
+
+            const msgObj = response.choices?.[0]?.message || {};
+            const toolCalls = msgObj.tool_calls || msgObj.toolCalls || [];
+            const content = msgObj.content || '';
+
+            // Add assistant message (with potential tool calls) to conversation
+            messagesForApi.push({
+                role: 'assistant',
+                content: typeof content === 'string' && content ? [{ type: 'text', text: content }] : (Array.isArray(content) ? content : []),
+                tool_calls: toolCalls.length ? toolCalls : undefined
+            });
+
+            if (toolCalls.length) {
+                // Execute tools in parallel
+                const toolResults = await executeToolCalls(toolCalls);
+                // Push each tool result
+                toolCalls.forEach(tc => {
+                    messagesForApi.push({
+                        role: 'tool',
+                        tool_call_id: tc.id,
+                        content: [{ type: 'text', text: toolResults[tc.id] || '' }]
+                    });
+                });
+                continue; // Next iteration to get final answer
+            }
+
+            // No tool calls; finalize if we have content
+            aiText = (typeof content === 'string') ? content : Array.isArray(content) ? content.map(c => c.text || '').join('\n') : '';
+            break;
         }
+
+        if (typingInterval) clearInterval(typingInterval);
         aiText = (aiText || '(no response)').trim();
         if (!aiText) aiText = '(empty response)';
 
-        // Split and send using shared splitter
         const chunks = splitMsg(aiText, 2000);
         for (const part of chunks) {
             // eslint-disable-next-line no-await-in-loop
             await message.channel.send(part);
         }
-        log.debug('openaiResponseSent', { parts: chunks.length, totalLength: aiText.length });
+        log.debug('openaiResponseSent', { parts: chunks.length, totalLength: aiText.length, iterations: iteration });
     } catch (err) {
         log.warn('messageCreateHandlerError', { error: err.message, messageId: message.id });
     }

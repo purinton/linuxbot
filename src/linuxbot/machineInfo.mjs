@@ -47,6 +47,9 @@ export function getLocalMachineInfo() {
     const osr = readOsRelease();
     const prettyName = osr?.PRETTY_NAME || osr?.NAME;
     const container = detectContainer();
+    let user;
+    try { user = os.userInfo().username; } catch { user = process.env.USER || process.env.USERNAME; }
+    const homeDir = os.homedir();
 
     const lines = [
         `Hostname: ${hostname}`,
@@ -55,8 +58,12 @@ export function getLocalMachineInfo() {
         `CPU: ${cpuSummary} (cores=${cpuCount})`,
         `Memory: ${totalMemGB} GB total`,
         `Node: ${nodeVersion}`,
+        user ? `User: ${user}` : null,
+        homeDir ? `Home: ${homeDir}` : null,
     ];
     if (container) lines.push(`Environment: ${container}`);
-    cachedInfo = lines.join('\n');
+    // Remove any null entries
+    const filtered = lines.filter(Boolean);
+    cachedInfo = filtered.join('\n');
     return cachedInfo;
 }

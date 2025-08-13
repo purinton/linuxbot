@@ -1,4 +1,5 @@
-// events/messageCreate.mjs
+// events/messageCreate.
+import { handle } from '../src/messageCreate/messageHandle.mjs';
 export default async function ({ client, log, openai, promptConfig, allowIds }, message) {
     log.debug('messageCreate', { id: message.id });
     if (message.author.id === client.user.id) return;
@@ -54,6 +55,8 @@ export default async function ({ client, log, openai, promptConfig, allowIds }, 
             log.debug('invocationMissingIgnored', { userId, messageId: message.id });
             return; // Not addressed to bot context
         }
+
+        handle({ client, log, openai, promptConfig, message });
     } catch (err) {
         log.error('messageCreateError', { error: err.message });
     }
